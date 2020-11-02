@@ -1,0 +1,11 @@
+TRANSFER
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\key.obj",
+".\Objects\adc.obj",
+".\Objects\timer1.obj",
+".\Objects\common.obj",
+".\Objects\led.obj",
+".\Objects\timer0.obj",
+".\Objects\gpio.obj" 
+TO ".\Objects\ad°´¼ü×´Ì¬»ú.LIB"

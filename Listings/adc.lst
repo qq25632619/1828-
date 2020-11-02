@@ -1,0 +1,57 @@
+C51 COMPILER V9.54   ADC                                                                   11/02/2020 09:13:01 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\adc.obj
+COMPILER INVOKED BY: e:\Keil_v5\C51\BIN\C51.EXE adc.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\adc.l
+                    -st) OBJECT(.\Objects\adc.obj)
+
+line level    source
+
+   1          #include "adc.h"
+   2          
+   3          void adc_init(void) //ADC³õÊ¼»¯
+   4          {
+   5   1              ADC_CONTR = 0x61 ;  //0110 0001 //¹Øadc£¬270¸öÖÜÆÚ×ª»»Ò»´Î£¬¹Ø±êÖ¾Î»£¬¹Ø±ÕÆô¶¯Î»£¬Ñ¡Ôñ1Í¨µÀ
+   6   1              adc_power_on ;         //ÖØ¿ªadc
+   7   1              adc_start_on ;         //¿ªÆô×ª»»
+   8   1              adc_flag_clear ; //Çåadc×ª»»±êÖ¾Î»
+   9   1      }
+  10          
+  11          u16 adc_result()  //»ñÈ¡ADCÖµ
+  12          {
+  13   1              u16 result = 0 ; //32bitÊý¾Ý×°ÔØ10bitµÄadc×ª»»½á¹ûÖµ 
+  14   1              u16 value = 0  ; 
+  15   1              adc_init() ;         
+  16   1      
+  17   1              while(!(ADC_CONTR & 0x10)) ;  //& 0001 0000£¬ÈôÊÇÍê³É×ª»»£¬Ôòbit5Îª1£¬ÓëÉÏ0x10£¬ÈÔÎª1£¬ÔÙÈ¡·´Îª0£¬
+             -ÔòÌø¹ý¸ÄÐÐÖ´ÐÐÏÂÒ»ÐÐ 
+  18   1              result = ADC_DATA*4 + ADC_LOW2 ; //ADC_DATA¼Ä´æÆ÷Îª8bit£¬×óÒÆÁ½Î»£¬ÔÙ¼ÓÉÏADC_LOW2µÄÖµ£¬¼´¿ÉµÃµ½×ª»
+             -»ºóÍêÕûµÄ10bit½á¹û
+  19   1              adc_flag_clear ; //Çå³ýADC_FLAG±êÖ¾Î»
+  20   1      
+  21   1              return result ; 
+  22   1      }
+  23          
+  24          u16 adc_hex2dec(float value) //16½øÖÆµçÑ¹Öµ×ª10½øÖÆ£¬µ¥Î»ÎªmVºÁ·ü
+  25          {
+  26   1              float value_dec ; 
+  27   1              value_dec = (VCC * (value))/1024 ;        
+  28   1              
+  29   1              return (u16)value_dec ; 
+  30   1      }
+  31          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     90    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

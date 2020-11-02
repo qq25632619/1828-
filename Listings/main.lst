@@ -1,0 +1,84 @@
+C51 COMPILER V9.54   MAIN                                                                  11/02/2020 09:13:01 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: e:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "common.h"
+   2          #include "timer1.h"
+   3          #include "timer0.h"
+   4          #include "key.h"
+   5          #include "gpio.h"
+   6          #include "led.h"
+   7          #include "pwm.h"
+   8          
+   9          void delay(u16 iii)
+  10          {
+  11   1              u16 temp = 0  ; 
+  12   1              while(iii--)
+  13   1                      for(temp = 0 ; temp < 1000 ; temp++); 
+  14   1      }
+  15          /*****************************************
+  16          *****************************************/
+  17          
+  18          u8 i = 48 ; 
+  19          
+  20          void main()
+  21          {
+  22   1              
+  23   1                      u8 i = 0 , j = 0 ; 
+  24   1              led = 1 ;
+  25   1              
+  26   1      //              seg_config.seg = 0x00 ; 
+  27   1      //              seg_config.seg_struct_select.seg1 = ds2 ; 
+  28   1      //              seg_config.seg_struct_select.seg2 = ds1 ; 
+  29   1      //              seg_config.seg_struct_select.seg3 = ds3 ; 
+  30   1      //              seg_config.seg_struct_select.seg4 = ds4 ; 
+  31   1      //              seg_config.seg_struct_select.seg5 = ds5 ; 
+  32   1      //      
+  33   1              
+  34   1                      AUXR = 0xc0 ; //定时器0和定时器1均为1T模式
+  35   1              
+  36   1      //              AUXR = 0x80 ; //定时器0为1T模式
+  37   1      
+  38   1      //              AUXR = 0x00 ; //定时器0为12T模式
+  39   1              
+  40   1              gpio_init() ; 
+  41   1              timer1_init() ; 
+  42   1                      timer0_init() ; 
+  43   1              adc_init() ;
+  44   1                      pwm_init() ; 
+  45   1              buzz = 0 ;
+  46   1                      set_display(0x3f) ; //先显示00 0 00
+  47   1                      ds1 = 0 ; ds2 = 0 ;     ds3 = 0 ;       ds4 = 0 ; ds5 = 0 ;  //关闭所有数码管   
+  48   1                      delay(500) ; 
+  49   1              
+  50   1              while(1)
+  51   1              {        
+  52   2      //                      key_process_display() ; //主要为按键改变的全局变量
+  53   2                              key_function() ; //按键执行函数，调节各路占空比及频率等
+  54   2      //                      display_time() ; //数码管显示函数
+C51 COMPILER V9.54   MAIN                                                                  11/02/2020 09:13:01 PAGE 2   
+
+  55   2                              foot_functions() ; //足疗脉冲调节
+  56   2                      }
+  57   1      }
+  58          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     89    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

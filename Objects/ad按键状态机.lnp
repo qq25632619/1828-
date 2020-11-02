@@ -1,0 +1,12 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\key.obj",
+".\Objects\adc.obj",
+".\Objects\timer1.obj",
+".\Objects\common.obj",
+".\Objects\led.obj",
+".\Objects\timer0.obj",
+".\Objects\gpio.obj",
+".\Objects\pwm.obj" 
+TO ".\Objects\ad按键状态机" 
+PRINT(".\Listings\ad按键状态机.m51") RAMSIZE(256) 

@@ -1,0 +1,581 @@
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: e:\Keil_v5\C51\BIN\C51.EXE key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\key.l
+                    -st) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          
+   3          extern u8 key_number = 0 ; 
+   4          extern u8 key_number_final = 0 ; 
+   5          u8 aaa = 0 , statues_run = 0 ; 
+   6          bit flag_key_3 = 0 ;
+   7          bit flag_led = 0 ;
+   8          u8 foot_statues = 0 ; 
+   9          u8 foot_pwm_width_table_index = 0 ;
+  10          bit time_control_flag = 0 ;
+  11          
+  12          /*****************************************
+  13          *****************************************/
+  14          u8 adc_key_value_process(u16 adc_value)  //Í¨¹ýadcÖµ¶¨Òå¼üÖµ²¢·µ»Ø..........¸Ãº¯ÊýÓÐÎÊÌâ£¬ÐèÒª¶ÔadcµçÑ¹Öµ½
+             -øÐÐ¸üºÃµÄ´¦Àí
+  15          {
+  16   1      #if 1   
+  17   1              u16 temp_adc_value = adc_value ; //ÖÐ¼ä±äÁ¿
+  18   1              temp_adc_value /= 100 ; //¶Ô100ÇóÄ££¬ÈôÊÇÐèÒª¸ü¸ß¾«¶È£¬¿É¸Ä100Îª¸üÐ¡Öµ
+  19   1              
+  20   1              switch (temp_adc_value) //temp_adc_value¾«¶È´æÔÚÑÏÖØÎÊÌâ£¬½¨ÒéÔÙÓÃÒ»¸öswitchÓï¾äÅÐ¶Ï¼üÖµ£¬Ê¹µçÑ¹Öµ
+             -×ª»¯Îª0-10µÄÊý×Ö
+  21   1              {
+  22   2                      case 41 :         //°´¼ü1°´ÏÂµçÑ¹ÖµÎª4100mV×óÓÒ
+  23   2                              return 1 ;    //·µ»Ø1
+  24   2                      case 35 :
+  25   2                              return 2 ; 
+  26   2                      case 30 :
+  27   2                              return 3 ; 
+  28   2                      case 25 :
+  29   2                              return 4 ; 
+  30   2                      case 21 :
+  31   2                              return 5 ; 
+  32   2                      case 15 :
+  33   2                              return 6 ; 
+  34   2                      case 10 :
+  35   2                              return 7 ; 
+  36   2                      case 5 :
+  37   2                              return 8 ; 
+  38   2                      case 0 :
+  39   2                              return 9 ; 
+  40   2                      
+  41   2                      default :        //Î´°´ÏÂ£¬·µ»Ø0
+  42   2                              return 0 ; 
+  43   2              }
+  44   1      #endif          
+  45   1                      
+  46   1      #if 0
+              /************************************************************************************************/              
+                                              if((adc_value >=0 ) && (adc_value <= 5200)) //ÈôÊÇÓÐ°´¼ü°´ÏÂ£¬Ôò°´¼ü¶ÔºÅ 
+                              {                                       
+                                      if((adc_value >= 0)  && (adc_value <= 200)) 
+                                              return key9;
+                                      else if((adc_value >  323)  && (adc_value <  723))  //+-200mV
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 2   
+
+                                              return key8;
+                                      else if((adc_value >  854)  && (adc_value < 1254)) 
+                                              return key7;
+                                      else if((adc_value > 1342)  && (adc_value < 1742)) 
+                                              return key6;
+                                      else if((adc_value > 1938)  && (adc_value < 2338)) 
+                                              return key5;
+                                      else if((adc_value > 2378)  && (adc_value < 2778)) 
+                                              return key4;
+                                      else if((adc_value > 2837)  && (adc_value < 3237)) 
+                                              return key3;
+                                      else if((adc_value > 3393)  && (adc_value < 3793)) 
+                                              return key2;
+                                      else if((adc_value > 3906)  && (adc_value < 4306)) 
+                                              return key1;
+                                      else if((adc_value > 4550)  && (adc_value <= 5200))  //ÎÞ°´¼ü°´ÏÂ
+                                              return key10;
+                                                              else 
+                                                                      return 0 ;
+                                                      }
+                                                      else 
+                                                              return 0 ; 
+              /**************************************************************************************************/
+              #endif
+  77   1      }
+  78          /*****************************************
+  79          *****************************************/
+  80          void key_scan(void) //×´Ì¬»úº¯Êý£¬·µ»Ø×´Ì¬»ú¼üÖµ
+  81          {
+  82   1                      static u8 key_statues = key_statues0 ; //Ïàµ±ÓÚËø£¬º¯ÊýÔËÐÐÇ°ÓëÔËÐÐÍê£¬¶¼ÒªÖÃ0£¬Ò²ÊÇ³õÊ¼Ì¬
+             -»òÕßÈë¿Ú
+  83   1                      static u8 adc_key_number_temp = 0 ; 
+  84   1      
+  85   1                                      adc_key_number_temp = adc_key_value_process(adc_hex2dec(adc_result())) ;//²É¼¯adc£¬²¢×ª»¯Îª¼üÖµ
+  86   1                                      key_number = adc_key_number_temp ; 
+  87   1      //                              key_number = 8 ; 
+  88   1                                      switch(key_statues)
+  89   1                                      {
+  90   2                                                      case key_statues0 : //³õÊ¼Ì¬,Ò²Ïàµ±ÓÚËø                                         //µÚÒ»´Î½øÈëswitch
+  91   2                                                                      if(0 != key_number) //ÈôÊÇÓÐ°´¼ü°´ÏÂ£¬ÔòÇ¨ÒÆÖÁ×´Ì¬1------ÓÐ°´¼ü°´ÏÂÊ±£¬key_number²»»áÎª0
+  92   2                                                                                      key_statues = key_statues1 ; 
+  93   2                                                      break ; 
+  94   2                                                      
+  95   2                                                      case key_statues1 : //°´ÏÂÌ¬                                                            //µÚ¶þ´Î½øÈëswitch
+  96   2                                                                      if(0 == key_number)        //Èç¹ûÖ»ÊÇ¶¶¶¯£¬Ôò·µ»Ø×´Ì¬0
+  97   2                                                                                      key_statues = key_statues0 ; 
+  98   2                                                                      
+  99   2                                                                      else
+ 100   2                                                                      {
+ 101   3                                                                                      key_statues = key_statues2 ;  //ÈôÊÇÈ·ÊµÓÐ°´ÏÂ£¬ÔòÇ¨ÒÆµ½×´Ì¬2
+ 102   3                                                                                      key_number_final = adc_key_number_temp ; //Èç¹ûÈ·ÊµÓÐ°´¼ü°´ÏÂ£¬Ôò±£´æÏÈÇ°µÄkey_numberÖµ£¬ÔÚËÉÊÖº
+             -ó°´¼üÓÐÐ§Ê±ÐèÒª
+ 103   3      #if 1                                                                                                                   
+ 104   3                                                                                      switch(adc_key_number_temp)        //°´ÏÂºó¼üÖµÓÐÐ§£¬ÇÒÅÐ¶Ïadc_key_number_temp¼´¿É
+ 105   3                                                                                      {
+ 106   4                                                                                                      case 9 :
+ 107   4                                                                                                                      aaa = key9 ; 
+ 108   4                                                                                                                      break ; 
+ 109   4                                                                                                      
+ 110   4                                                                                                      case 8 :
+ 111   4                                                                                                                      aaa = key8 ;
+ 112   4                                                                                                                      break ; 
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 3   
+
+ 113   4                                                                                                      
+ 114   4                                                                                                      case 7 :
+ 115   4                                                                                                                      aaa = key7 ;
+ 116   4                                                                                                                      break ; 
+ 117   4                                                                                                      
+ 118   4                                                                                                      case 6 :
+ 119   4                                                                                                                      aaa = key6 ;
+ 120   4                                                                                                                      break ; 
+ 121   4                                                                                                      
+ 122   4                                                                                                      case 5 :
+ 123   4                                                                                                                      aaa = key5 ;
+ 124   4                                                                                                                      break ; 
+ 125   4                                                                                                      
+ 126   4                                                                                                      case 4 :
+ 127   4                                                                                                                      aaa = key4 ;
+ 128   4                                                                                                                      break ; 
+ 129   4                                                                                                      
+ 130   4                                                                                                      case 3 :
+ 131   4                                                                                                                      aaa = key3 ;
+ 132   4                                                                                                                      break ; 
+ 133   4                                                                                                      
+ 134   4                                                                                                      case 2 :
+ 135   4                                                                                                                      aaa = key2 ;
+ 136   4                                                                                                                      break ; 
+ 137   4                                                                                                      
+ 138   4                                                                                                      case 1 :
+ 139   4                                                                                                                      aaa = key1 ;
+ 140   4                                                                                                                      break ; 
+ 141   4      //                                                                                              
+ 142   4      //                                                                                              case 0:                 //Î´°´ÏÂ
+ 143   4      //                                                                                                              aaa = 0 ;
+ 144   4      //                                                                                                              break ; 
+ 145   4                                                                                                      
+ 146   4                                                                                                      default :
+ 147   4                                                                                                                      aaa = 0 ; 
+ 148   4                                                                                                                      break ; 
+ 149   4                                                                                      }
+ 150   3      #endif
+ 151   3                                                                      }
+ 152   2                                                      break ; 
+ 153   2                                                      
+ 154   2                                                      case key_statues2 : //È·ÈÏ°´ÏÂÌ¬£¬È·ÈÏ°´ÏÂÖ®ºó¾ÍÓ¦¸ÃÅÐ¶ÏÊÇ·ñËÉÊÖ£¬²¢½øÐÐÏû¶¶    //µÚÈý´Î½øÈëswitch
+ 155   2                                                                      if(0 == key_number)                //ÈôÒÑËÉÊÖ£¬Ç¨ÒÆÖÁ×´Ì¬3£¬Ïàµ±ÓÚËÉÊÖÏû¶¶
+ 156   2                                                                                      key_statues = key_statues3 ; 
+ 157   2                                                      break ; 
+ 158   2                                                      
+ 159   2                                                      case key_statues3 : //ËÉÊÖÌ¬                    //µÚËÄ´Î½øÈëswitch
+ 160   2                                                                      if(0 == key_number) //È·ÊµÒÑ¾­ËÉÊÖ
+ 161   2                                                                      {        
+ 162   3      //                                                                              key_statues = key_statues0 ; //Èç¹ûÊÇÈ·ÈÏÎÞ°´¼ü°´ÏÂ£¬Ôò½«×´Ì¬Ç¨ÒÆ»Ø×´Ì¬0£¬¼´³õÊ¼Ì¬¡£Ïàµ±ÓÚ×ÔËø
+ 163   3                                                                                      adc_key_number_temp = 0 ; 
+ 164   3                                                                              
+ 165   3      #if 0 
+              //                                                                              
+              //                                                                              switch(key_number_final)        //ËÉÊÖºó¼üÖµÓÐÐ§
+              //                                                                              {
+              //                                                                                              case 9 :
+              //                                                                                                              aaa = key9 ; 
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 8 :
+              //                                                                                                              aaa = key8 ;
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 4   
+
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 7 :
+              //                                                                                                              aaa = key7 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 6 :
+              //                                                                                                              aaa = key6 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 5 :
+              //                                                                                                              aaa = key5 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 4 :
+              //                                                                                                              aaa = key4 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 3 :
+              //                                                                                                              aaa = key3 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 2 :
+              //                                                                                                              aaa = key2 ;
+              //                                                                                                              break ; 
+              //                                                                                              
+              //                                                                                              case 1 :
+              //                                                                                                              aaa = key1 ;
+              //                                                                                                              break ; 
+              ////                                                                                            
+              ////                                                                                            case 0:                 //Î´°´ÏÂ
+              ////                                                                                                            aaa = 0 ;
+              ////                                                                                                            break ; 
+              //                                                                                              
+              //                                                                                              default :
+              //                                                                                                              aaa = 0 ; 
+              //                                                                                                              break ; 
+              //                                                                              }
+              #endif
+ 214   3                                                                                      key_statues = key_statues0 ; //Èç¹ûÊÇÈ·ÈÏÎÞ°´¼ü°´ÏÂ£¬Ôò½«×´Ì¬Ç¨ÒÆ»Ø×´Ì¬0£¬¼´³õÊ¼Ì¬¡£Ïàµ±ÓÚ×ÔËø
+ 215   3                                                                      }
+ 216   2                                                                      else    
+ 217   2                                                                      {
+ 218   3                                                                                      aaa = 0 ; 
+ 219   3                                                                                      key_statues = key_statues2 ; //·ñÔò»Øµ½×´Ì¬2£¬¼´ÔÙÅÐ¶ÏÒ»´Î
+ 220   3                                                                      }
+ 221   2                                                      break ; 
+ 222   2                                      }
+ 223   1      }
+ 224          
+ 225          void key_process_display()      //°´¼ü²Ù×÷ÊýÂë¹ÜÏÔÊ¾
+ 226          {               
+ 227   1      //              foot_functions() ; 
+ 228   1              switch(aaa)
+ 229   1              {
+ 230   2                                      case 0 :
+ 231   2                                              break ; 
+ 232   2                              
+ 233   2                      case key1 :   //Ê±¼äµ÷½ÚÔö¼Ó£¬²½³¤Îª5£¬³õÊ¼30£¬×î´ó60
+ 234   2      //                                              aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 235   2                                                      buzz = 0 ;
+ 236   2      //                                              statues_run = 1 ; //°´¼ü±àºÅ±êÖ¾Î»£¬º¯Êý¹¦ÄÜµÄÔËÐÐÌõ¼þ
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 5   
+
+ 237   2                                                      time_control_flag = 1 ; 
+ 238   2                                                      if(time_add_delay >= 20)
+ 239   2                                                      {
+ 240   3                                                              statues_run = 1 ; //°´¼ü±àºÅ±êÖ¾Î»£¬º¯Êý¹¦ÄÜµÄÔËÐÐÌõ¼þ
+ 241   3                                                              time_add_delay = 0 ;
+ 242   3                                                              time_control_flag = 0 ; 
+ 243   3                                                              time_for_set += 5 ;
+ 244   3      //                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 245   3                                                      }                                                       
+ 246   2                                                      if(time_for_set >= 60)
+ 247   2                                                      {
+ 248   3                                                              time_for_set = 60 ; 
+ 249   3      //                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 250   3                                                      }
+ 251   2      //                                              if(time_for_set >= 60)   
+ 252   2      //                                                      time_for_set = 60 ;
+ 253   2      //                                              else 
+ 254   2      //                                                      time_for_set += 5 ; 
+ 255   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 256   2                              break ;
+ 257   2                      
+ 258   2                      case key2 :                     //°¬¾ÄÈÈÁÆÔö¼Ó                                          
+ 259   2                                                      aaa = 0 ;                                               
+ 260   2                                                      buzz = 0 ;
+ 261   2                                                      statues_run = 2 ;       
+ 262   2                                                      
+ 263   2                                                      if(level_for_temperature >= 9)
+ 264   2                                                              level_for_temperature = 9 ; 
+ 265   2                                                      else 
+ 266   2                                                      {
+ 267   3      //                                                      time_control_flag = 1 ; 
+ 268   3      //                                                      if(time_add_delay >= 30)
+ 269   3      //                                                      {
+ 270   3      //                                                              time_add_delay = 0 ; 
+ 271   3      //                                                              time_control_flag = 0 ;
+ 272   3                                                                      level_for_temperature++ ;
+ 273   3      //                                                      }
+ 274   3                                                      }
+ 275   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 276   2                              break ; 
+ 277   2                      
+ 278   2                      case key3 :                     //×ãÁÆÂö³åÔö¼Ó
+ 279   2                                                      aaa = 0 ; 
+ 280   2                                                      buzz = 0 ;      
+ 281   2                                                      statues_run = 3 ;
+ 282   2                                                      if(level_for_foot >= 30)
+ 283   2                                                              level_for_foot = 30 ; 
+ 284   2                                                      else 
+ 285   2                                                              level_for_foot++ ;
+ 286   2                                                      
+ 287   2                                                      foot_statues = level_for_foot ; 
+ 288   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 289   2                              break ; 
+ 290   2                      
+ 291   2                      case key4 :      //Ê±¼äµ÷½Ú¼õÐ¡£¬²½³¤Îª5£¬³õÊ¼ÎªµÚÒ»´ÎÔö¼ÓÊ±¼äµÄÖµ£¬×îÐ¡Îª0
+ 292   2                                                      aaa = 0 ; 
+ 293   2                                                      buzz = 0 ;
+ 294   2                                                      statues_run = 4 ;  
+ 295   2                                                      if(time_for_set <= 0)           
+ 296   2                                                              time_for_set = 0  ; 
+ 297   2                                                      else
+ 298   2                                                      {
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 6   
+
+ 299   3      //                                                      time_control_flag = 1 ; 
+ 300   3      //                                                      if(time_add_delay >= 30)
+ 301   3      //                                                      {
+ 302   3                                                                      time_for_set -= 5 ;
+ 303   3      //                                                              time_control_flag = 0 ; 
+ 304   3      //                                                              time_add_delay = 0 ;
+ 305   3      //                                                      }
+ 306   3                                                      }
+ 307   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 308   2                              break ; 
+ 309   2                      
+ 310   2                      case key5 :     //°¬¾Ä¼ÓÈÈ¼õÐ¡
+ 311   2                                                      aaa = 0 ; 
+ 312   2                                                      buzz = 0 ;
+ 313   2                                      
+ 314   2                                                      if(level_for_temperature <= 0)
+ 315   2                                                              level_for_temperature = 0 ; 
+ 316   2                                                      else 
+ 317   2                                                      {
+ 318   3      //                                                      time_control_flag = 1 ; 
+ 319   3      //                                                      if(time_add_delay >= 30)
+ 320   3      //                                                      {
+ 321   3      //                                                              time_control_flag = 0 ; 
+ 322   3      //                                                              time_add_delay = 0 ;
+ 323   3                                                                      level_for_temperature-- ;
+ 324   3      //                                                      }                                                               
+ 325   3                                                      }
+ 326   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 327   2                              break ; 
+ 328   2                      
+ 329   2                      case key6 :     //×ãÁÆÂö³å¼õÐ¡
+ 330   2                                                      aaa = 0 ; 
+ 331   2                                                      buzz = 0 ; 
+ 332   2                                                      statues_run = 6 ; 
+ 333   2      //                                              pwm_update_for_hot0_pwm0(0x23 , 0x99) ; 
+ 334   2                                                      if(level_for_foot <= 0)
+ 335   2                                                              level_for_foot = 0 ; 
+ 336   2                                                      else 
+ 337   2                                                              level_for_foot-- ;
+ 338   2                                                      foot_statues = level_for_foot ; 
+ 339   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 340   2                              break ; 
+ 341   2                      
+ 342   2                      case key7 : //¿ª¹Ø»ú
+ 343   2                                                      aaa = 0 ; 
+ 344   2                                                      buzz = 0 ;
+ 345   2                                                      statues_run = 7 ; 
+ 346   2                                                      aaa = 0 ; 
+ 347   2                              break ; 
+ 348   2                      
+ 349   2                      case key8 : //¼¤¹âÇ¿¶È£¬Èýµµ
+ 350   2                                                      aaa = 0 ; 
+ 351   2                                                      buzz = 0 ;
+ 352   2                                                      statues_run = 8 ; 
+ 353   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+ 354   2                              break ; 
+ 355   2                      
+ 356   2                      case key9 : //ÔÝÍ£
+ 357   2                                                      aaa = 0 ; 
+ 358   2                                                      buzz = 0 ;
+ 359   2                                                      statues_run = 9 ; 
+ 360   2                                                      aaa = 0 ; //Ëø£¬·ÀÖ¹Ò»Ö±´¥·¢
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 7   
+
+ 361   2                              break ; 
+ 362   2                                      
+ 363   2      //                              case key10 :
+ 364   2      //                                              aaa = 0 ; 
+ 365   2      //                                              break ; 
+ 366   2                                      
+ 367   2                                      default :
+ 368   2                                                      aaa = 0 ; 
+ 369   2                                                      break ; 
+ 370   2                      }
+ 371   1      //              break ; 
+ 372   1      }
+ 373          
+ 374          
+ 375          void key_function(void)         //°´¼üÏìÓ¦£¬Ö÷Òª×÷ÓÃÎªµ÷½ÚPWMÕ¼¿Õ±È 
+ 376          {
+ 377   1              static u8 i = 0 , j = 0 , m = 0 , n = 0 ; 
+ 378   1      
+ 379   1              switch(statues_run) 
+ 380   1              {
+ 381   2                      case 1 :
+ 382   2                              flag_led = 1 ; 
+ 383   2                              set_timer(10 , 2000 , buzz_on , buzz_off) ;             //Ò»¸öÖÜÆÚ40ms£¬¹ÊÆµÂÊÎª25Hz£¬Õ¼¿Õ±È50%
+ 384   2                              break ; 
+ 385   2                      case 2 :
+ 386   2                              flag_led = 1 ; 
+ 387   2                  set_timer(6 , 6 , led_on , led_off) ;               //8Hz
+ 388   2                              break ; 
+ 389   2                      case 3 :
+ 390   2                              flag_key_3 = 1 ; 
+ 391   2                              set_timer(20 , 20  , led_on , led_off) ;
+ 392   2                              if(key_3_delay >= 50) //Ã¿Ãë¸üÐÂÒ»´ÎÕ¼¿Õ±È£¿
+ 393   2                              {
+ 394   3                                      ++i ; 
+ 395   3                                      if(i >= foot_pwm_width_table_index)
+ 396   3                                              i = 0 ; 
+ 397   3                                      pwm_update_for_hot0_pwm0(0x80 , ~pwm_width_table[i]) ; 
+ 398   3                                      key_3_delay = 0 ;
+ 399   3                              }
+ 400   2                              break ; 
+ 401   2                      case 4 :
+ 402   2      //                      set_timer(100 , 100  , led_on , led_off) ;
+ 403   2      //                      pwm_update_for_hot0_pwm0(0xff , 0x80) ; //×î¸ßÆµÂÊ£¬Õ¼¿Õ±È50
+ 404   2      //                      TH0 = TL0 = 0x37 ; 
+ 405   2                              break ; 
+ 406   2                      case 5 :
+ 407   2                              set_timer(200 , 200  , led_on , led_off) ;
+ 408   2                              break ; 
+ 409   2                      case 6 :
+ 410   2                              flag_key_3 = 1 ;
+ 411   2                              set_timer(300 , 300  , led_on , led_off) ;      
+ 412   2                              if(key_3_delay >= 50) //Ã¿Ãë¸üÐÂÒ»´ÎÕ¼¿Õ±È£¿
+ 413   2                              {
+ 414   3                                      ++m ; 
+ 415   3                                      if(m >= foot_pwm_width_table_index)
+ 416   3                                              m = 0 ; 
+ 417   3                                      pwm_update_for_hot0_pwm0(0x80 , ~pwm_width_table[m]) ; 
+ 418   3                                      key_3_delay = 0 ;
+ 419   3                              }
+ 420   2                              break ; 
+ 421   2                      case 7 :
+ 422   2                              set_timer(400 , 400  , led_on , led_off) ; 
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 8   
+
+ 423   2                              break ; 
+ 424   2                      case 8 :
+ 425   2                              set_timer(500 , 500  , led_on , led_off) ; 
+ 426   2                              break ; 
+ 427   2                      case 9 :
+ 428   2                              set_timer(600 , 600  , buzz_on , buzz_off) ;
+ 429   2                              break ;  
+ 430   2              }
+ 431   1      }
+*** WARNING C280 IN LINE 377 OF key.c: 'j': unreferenced local variable
+*** WARNING C280 IN LINE 377 OF key.c: 'n': unreferenced local variable
+ 432          
+ 433          void foot_functions(void)       //°´¼ü¸Ä±äpwm¿í¶È£¬±ä»¯»ùÊý8¸ö²½³¤
+ 434          {
+ 435   1              switch(foot_statues)
+ 436   1              {
+ 437   2                      case foot_statues0 :
+ 438   2                              foot_pwm_width_table_index = 0 ; 
+ 439   2                              break ;                 
+ 440   2                      case foot_statues1 :
+ 441   2                              foot_pwm_width_table_index = 8 ; 
+ 442   2                              break ;                 
+ 443   2                      case foot_statues2 :
+ 444   2                              foot_pwm_width_table_index = 16 ; 
+ 445   2                              break ;                 
+ 446   2                      case foot_statues3 :
+ 447   2                              foot_pwm_width_table_index = 24 ; 
+ 448   2                              break ;                 
+ 449   2                      case foot_statues4 :
+ 450   2                              foot_pwm_width_table_index = 32 ; 
+ 451   2                              break ;                 
+ 452   2                      case foot_statues5 :
+ 453   2                              foot_pwm_width_table_index = 40 ; 
+ 454   2                              break ;                 
+ 455   2                      case foot_statues6 :
+ 456   2                              foot_pwm_width_table_index = 48 ; 
+ 457   2                              break ;                 
+ 458   2                      case foot_statues7 :
+ 459   2                              foot_pwm_width_table_index = 56 ; 
+ 460   2                              break ;                 
+ 461   2                      case foot_statues8 :
+ 462   2                              foot_pwm_width_table_index = 64 ; 
+ 463   2                              break ;                 
+ 464   2                      case foot_statues9 :
+ 465   2                              foot_pwm_width_table_index = 72 ; 
+ 466   2                              break ; 
+ 467   2                      case foot_statues10 :
+ 468   2                              foot_pwm_width_table_index = 80 ; 
+ 469   2                              break ; 
+ 470   2                                      
+ 471   2                      case foot_statues11 :
+ 472   2                              foot_pwm_width_table_index = 96 ; 
+ 473   2                              break ;                 
+ 474   2                      case foot_statues12 :
+ 475   2                              foot_pwm_width_table_index = 106 ; 
+ 476   2                              break ;                 
+ 477   2                      case foot_statues13 :
+ 478   2                              foot_pwm_width_table_index = 112 ; 
+ 479   2                              break ;                 
+ 480   2                      case foot_statues14 :
+ 481   2                              foot_pwm_width_table_index = 120 ; 
+ 482   2                              break ;                 
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 9   
+
+ 483   2                      case foot_statues15 :
+ 484   2                              foot_pwm_width_table_index = 128 ; 
+ 485   2                              break ;                 
+ 486   2                      case foot_statues16 :
+ 487   2                              foot_pwm_width_table_index = 136 ; 
+ 488   2                              break ;                 
+ 489   2                      case foot_statues17 :
+ 490   2                              foot_pwm_width_table_index = 144 ; 
+ 491   2                              break ;                 
+ 492   2                      case foot_statues18 :
+ 493   2                              foot_pwm_width_table_index = 152 ; 
+ 494   2                              break ;                 
+ 495   2                      case foot_statues19 :
+ 496   2                              foot_pwm_width_table_index = 160 ; 
+ 497   2                              break ; 
+ 498   2                      case foot_statues20 :
+ 499   2                              foot_pwm_width_table_index = 168 ; 
+ 500   2                              break ; 
+ 501   2                                      
+ 502   2                      case foot_statues21 :
+ 503   2                              foot_pwm_width_table_index = 176 ; 
+ 504   2                              break ;                 
+ 505   2                      case foot_statues22 :
+ 506   2                              foot_pwm_width_table_index = 184 ; 
+ 507   2                              break ;                 
+ 508   2                      case foot_statues23 :
+ 509   2                              foot_pwm_width_table_index = 192 ; 
+ 510   2                              break ;                 
+ 511   2                      case foot_statues24 :
+ 512   2                              foot_pwm_width_table_index = 200 ; 
+ 513   2                              break ;                 
+ 514   2                      case foot_statues25 :
+ 515   2                              foot_pwm_width_table_index = 208 ; 
+ 516   2                              break ;                 
+ 517   2                      case foot_statues26 :
+ 518   2                              foot_pwm_width_table_index = 216 ; 
+ 519   2                              break ;                 
+ 520   2                      case foot_statues27 :
+ 521   2                              foot_pwm_width_table_index = 224 ; 
+ 522   2                              break ;                 
+ 523   2                      case foot_statues28 :
+ 524   2                              foot_pwm_width_table_index = 232 ; 
+ 525   2                              break ;                 
+ 526   2                      case foot_statues29 :
+ 527   2                              foot_pwm_width_table_index = 240 ; 
+ 528   2                              break ; 
+ 529   2                      case foot_statues30 :
+ 530   2                              foot_pwm_width_table_index = 248 ; 
+ 531   2                              break ; 
+ 532   2              }
+ 533   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1070    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   KEY                                                                   11/02/2020 09:13:01 PAGE 10  
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)
